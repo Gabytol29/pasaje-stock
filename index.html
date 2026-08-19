@@ -16,13 +16,14 @@
     --ink-soft:#5B6470;
     --line:#D7D1C2;
     --green:#2E7D46;
+    --green-bg:#E4EFE6;
     --red:#B5432E;
     --mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
   html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
-  body{padding-bottom:100px;}
+  body{padding-bottom:150px;}
 
   /* HEADER */
   .topbar{
@@ -84,9 +85,13 @@
     font-family:var(--mono); font-weight:700; font-size:17px; background:var(--paper-2);
     color:var(--navy); border-radius:8px; min-width:44px; text-align:center; padding:8px 4px; flex-shrink:0;
   }
+  .item-thumb{
+    width:40px; height:40px; border-radius:7px; object-fit:cover; flex-shrink:0; cursor:pointer;
+    border:1px solid var(--line);
+  }
   .item-info{flex:1; min-width:0;}
   .item-name{font-size:14.5px; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .item-meta{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .item-meta{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .item-del{
     background:none; border:none; color:var(--red); font-size:19px; padding:6px 8px; cursor:pointer; line-height:1;
     flex-shrink:0;
@@ -99,12 +104,20 @@
   .hist-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
   .hist-date{font-family:var(--mono); font-weight:700; font-size:13.5px; color:var(--navy);}
   .hist-sub{font-size:12px; color:var(--ink-soft); margin-top:2px;}
-  .hist-actions{display:flex; gap:6px; margin-top:10px;}
+  .badge{
+    font-family:var(--mono); font-size:10.5px; text-transform:uppercase; font-weight:700;
+    padding:3px 8px; border-radius:10px; white-space:nowrap; letter-spacing:0.3px;
+  }
+  .badge-pendiente{background:#FBEBD2; color:var(--amber-dark);}
+  .badge-pasado{background:var(--green-bg); color:var(--green);}
+  .hist-actions{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
   .hist-actions button{
     flex:1; padding:8px 6px; font-size:12.5px; border-radius:7px; border:1px solid var(--line);
     background:var(--paper); color:var(--ink); font-family:var(--sans); cursor:pointer; font-weight:600;
+    min-width:90px;
   }
   .hist-actions button.danger{color:var(--red); border-color:#E3C2B8;}
+  .hist-actions button.ok{background:var(--navy); color:#fff; border-color:var(--navy);}
 
   /* BOTTOM ADD BAR */
   .add-bar{
@@ -118,9 +131,21 @@
     border:1px solid var(--line); border-radius:9px; padding:11px 10px; font-size:16px;
     font-family:var(--sans); background:var(--paper); min-width:0;
   }
-  #f-codigo{width:32%; font-family:var(--mono);}
+  #f-sku, #f-codigobarra{width:50%; font-family:var(--mono); font-size:14px;}
   #f-nombre{flex:1;}
   #f-cant{width:22%; font-family:var(--mono); text-align:center;}
+
+  .photo-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
+  .btn-photo{
+    display:flex; align-items:center; gap:6px; background:var(--paper-2); border:1px solid var(--line);
+    border-radius:9px; padding:9px 12px; font-size:13px; color:var(--ink); font-family:var(--sans);
+    cursor:pointer; font-weight:600;
+  }
+  .photo-preview{display:flex; align-items:center; gap:6px;}
+  .photo-preview img{width:34px; height:34px; object-fit:cover; border-radius:6px; border:1px solid var(--line);}
+  .photo-preview button{background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;}
+  .photo-hint{font-size:11.5px; color:var(--ink-soft);}
+
   .add-btn-row{display:flex; gap:7px;}
   .btn-add{
     flex:1; background:var(--navy); color:#fff; border:none; border-radius:9px; padding:13px;
@@ -139,7 +164,7 @@
   }
   .modal-bg.show{display:flex;}
   .modal{
-    background:var(--paper); width:100%; max-width:520px; max-height:88vh; overflow-y:auto;
+    background:var(--paper); width:100%; max-width:560px; max-height:88vh; overflow-y:auto;
     border-radius:16px 16px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
   }
   @media (min-width:640px){
@@ -148,12 +173,13 @@
   }
   .modal h3{margin:0 0 4px; font-size:18px; font-family:var(--mono);}
   .modal .modal-sub{color:var(--ink-soft); font-size:12.5px; margin-bottom:14px;}
-  .modal table{width:100%; border-collapse:collapse; font-size:13px; margin-bottom:16px;}
+  .modal table{width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:16px;}
   .modal th{
-    text-align:left; font-family:var(--mono); text-transform:uppercase; font-size:10.5px;
+    text-align:left; font-family:var(--mono); text-transform:uppercase; font-size:10px;
     color:var(--ink-soft); border-bottom:1px solid var(--line); padding:6px 4px;
   }
-  .modal td{padding:7px 4px; border-bottom:1px solid #EEEAE0;}
+  .modal td{padding:7px 4px; border-bottom:1px solid #EEEAE0; vertical-align:middle;}
+  .modal td img{width:32px; height:32px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid var(--line);}
   .modal-actions{display:flex; gap:8px;}
   .modal-actions button{
     flex:1; padding:12px; border-radius:9px; border:none; font-weight:700; font-size:14px; cursor:pointer;
@@ -165,10 +191,15 @@
     font-size:13px; text-decoration:underline; cursor:pointer;
   }
 
+  .photo-viewer{position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:70; display:none; align-items:center; justify-content:center; padding:20px;}
+  .photo-viewer.show{display:flex;}
+  .photo-viewer img{max-width:100%; max-height:100%; border-radius:8px;}
+
   .toast{
-    position:fixed; bottom:118px; left:50%; transform:translateX(-50%) translateY(20px);
+    position:fixed; bottom:168px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--navy); color:#fff; padding:10px 18px; border-radius:20px; font-size:13.5px;
     opacity:0; transition:all 0.25s ease; z-index:60; pointer-events:none; font-weight:600;
+    max-width:85%; text-align:center;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
@@ -212,9 +243,21 @@
 
   <div class="add-bar" id="add-bar">
     <div class="add-row">
-      <input type="text" id="f-codigo" placeholder="Código" autocomplete="off">
+      <input type="text" id="f-sku" placeholder="SKU" autocomplete="off">
+      <input type="text" id="f-codigobarra" placeholder="Código de barra" autocomplete="off">
+    </div>
+    <div class="add-row">
       <input type="text" id="f-nombre" placeholder="Nombre de la mercadería" autocomplete="off">
       <input type="number" id="f-cant" placeholder="Cant." inputmode="numeric" min="1">
+    </div>
+    <div class="photo-row">
+      <input type="file" id="f-foto" accept="image/*" capture="environment" class="hidden">
+      <button type="button" class="btn-photo" id="btn-foto" onclick="document.getElementById('f-foto').click()">📷 Foto (opcional)</button>
+      <span class="photo-hint" id="photo-hint">solo de referencia, se borra al pasar el ítem</span>
+      <div class="photo-preview hidden" id="photo-preview">
+        <img id="photo-preview-img" src="">
+        <button type="button" onclick="quitarFotoPendiente()">✕</button>
+      </div>
     </div>
     <div class="add-btn-row">
       <button class="btn-add" onclick="addItem()">+ Agregar ítem</button>
@@ -226,6 +269,10 @@
     <div class="modal" id="modal-content"></div>
   </div>
 
+  <div class="photo-viewer" id="photo-viewer" onclick="closePhotoViewer()">
+    <img id="photo-viewer-img" src="">
+  </div>
+
   <div class="toast" id="toast"></div>
 
 <script>
@@ -234,18 +281,25 @@ const LS_HISTORY = 'pasestock_history';
 
 let current = JSON.parse(localStorage.getItem(LS_CURRENT) || '{"ubicacionDefault":"","items":[]}');
 let history = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+let fotoPendiente = null;
 
 const $ = id => document.getElementById(id);
 
-function saveCurrent(){ localStorage.setItem(LS_CURRENT, JSON.stringify(current)); }
-function saveHistory(){ localStorage.setItem(LS_HISTORY, JSON.stringify(history)); }
+function saveCurrent(){
+  try{ localStorage.setItem(LS_CURRENT, JSON.stringify(current)); }
+  catch(e){ showToast('No hay espacio de almacenamiento. Borrá fotos viejas o pasá pasadas pendientes.'); }
+}
+function saveHistory(){
+  try{ localStorage.setItem(LS_HISTORY, JSON.stringify(history)); }
+  catch(e){ showToast('No hay espacio de almacenamiento. Marcá pasadas viejas como "pasado" para liberar lugar.'); }
+}
 
 function showToast(msg){
   const t = $('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(showToast._tm);
-  showToast._tm = setTimeout(()=>t.classList.remove('show'), 1700);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
 /* ---------- INIT ---------- */
@@ -264,10 +318,58 @@ function fmtFechaArchivo(d){
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
 
+/* ---------- FOTO (referencia, se resize antes de guardar) ---------- */
+$('f-foto').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  resizeImage(file, 700, 0.6).then(dataUrl=>{
+    fotoPendiente = dataUrl;
+    $('photo-preview-img').src = dataUrl;
+    $('photo-preview').classList.remove('hidden');
+    $('btn-foto').classList.add('hidden');
+  }).catch(()=>{ showToast('No se pudo procesar la foto'); });
+  e.target.value = '';
+});
+
+function quitarFotoPendiente(){
+  fotoPendiente = null;
+  $('photo-preview').classList.add('hidden');
+  $('btn-foto').classList.remove('hidden');
+}
+
+function resizeImage(file, maxWidth, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h * (maxWidth / w)); w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function verFoto(src){
+  if(!src) return;
+  $('photo-viewer-img').src = src;
+  $('photo-viewer').classList.add('show');
+}
+function closePhotoViewer(){ $('photo-viewer').classList.remove('show'); }
+
 /* ---------- ADD ITEM ---------- */
 function addItem(){
   const ubic = $('f-ubicacion').value.trim();
-  const codigo = $('f-codigo').value.trim();
+  const sku = $('f-sku').value.trim();
+  const codigoBarra = $('f-codigobarra').value.trim();
   const nombre = $('f-nombre').value.trim();
   const cant = parseInt($('f-cant').value, 10);
 
@@ -275,25 +377,30 @@ function addItem(){
   if(!nombre){ showToast('Falta el nombre de la mercadería'); $('f-nombre').focus(); return; }
   if(!cant || cant <= 0){ showToast('Cantidad inválida'); $('f-cant').focus(); return; }
 
-  // merge with existing row of same ubicacion + codigo (or same ubicacion+nombre if sin codigo)
-  const existing = current.items.find(it =>
-    it.ubicacion === ubic &&
-    ((codigo && it.codigo === codigo) || (!codigo && !it.codigo && it.nombre === nombre))
-  );
+  const key = it => `${it.ubicacion}|${it.sku||''}|${it.codigoBarra||''}|${it.nombre}`;
+  const newKey = key({ubicacion:ubic, sku, codigoBarra, nombre});
+  const existing = current.items.find(it => key(it) === newKey);
 
   if(existing){
     existing.cantidad += cant;
+    if(fotoPendiente && !existing.foto) existing.foto = fotoPendiente;
   } else {
-    current.items.push({ubicacion: ubic, codigo, nombre, cantidad: cant, hora: fmtFecha(new Date())});
+    current.items.push({
+      ubicacion: ubic, sku, codigoBarra, nombre, cantidad: cant,
+      foto: fotoPendiente || null,
+      hora: fmtFecha(new Date())
+    });
   }
 
   saveCurrent();
   renderItems();
 
-  $('f-codigo').value = '';
+  $('f-sku').value = '';
+  $('f-codigobarra').value = '';
   $('f-nombre').value = '';
   $('f-cant').value = '';
-  $('f-codigo').focus();
+  quitarFotoPendiente();
+  $('f-sku').focus();
   showToast(existing ? 'Cantidad sumada' : 'Ítem agregado');
 }
 
@@ -313,16 +420,20 @@ function renderItems(){
     return;
   }
 
-  wrap.innerHTML = `<div class="item-list">` + current.items.map((it, i) => `
+  wrap.innerHTML = `<div class="item-list">` + current.items.map((it, i) => {
+    const meta = [it.sku ? 'SKU '+it.sku : null, it.codigoBarra ? 'CB '+it.codigoBarra : null, it.ubicacion].filter(Boolean).join(' · ');
+    const thumb = it.foto ? `<img class="item-thumb" src="${it.foto}" onclick="verFoto('${it.foto}')">` : '';
+    return `
     <div class="item-card">
       <div class="item-qty">${it.cantidad}</div>
+      ${thumb}
       <div class="item-info">
         <div class="item-name">${escapeHtml(it.nombre)}</div>
-        <div class="item-meta">${it.codigo ? escapeHtml(it.codigo)+' · ' : ''}${escapeHtml(it.ubicacion)}</div>
+        <div class="item-meta">${escapeHtml(meta)}</div>
       </div>
       <button class="item-del" onclick="removeItem(${i})" aria-label="Eliminar">✕</button>
     </div>
-  `).join('') + `</div>`;
+  `; }).join('') + `</div>`;
 }
 
 function escapeHtml(s){
@@ -335,8 +446,10 @@ function finalizarPasada(){
   const now = new Date();
   const pasada = {
     id: 'P' + now.getTime(),
-    fechaHora: fmtFecha(now),
-    fechaArchivo: fmtFechaArchivo(now),
+    estado: 'pendiente',
+    fechaCarga: fmtFecha(now),
+    fechaCargaArchivo: fmtFechaArchivo(now),
+    fechaPasado: null,
     items: JSON.parse(JSON.stringify(current.items))
   };
   history.unshift(pasada);
@@ -359,14 +472,16 @@ function generarTxt(pasada){
   let lines = [];
   lines.push('PASE DE MERCADERIA');
   lines.push('Districomp');
-  lines.push('Fecha y hora: ' + pasada.fechaHora);
+  lines.push('Fecha de carga: ' + pasada.fechaCarga);
+  if(pasada.fechaPasado) lines.push('Fecha pasado a Nodum: ' + pasada.fechaPasado);
+  lines.push('Estado: ' + (pasada.estado === 'pasado' ? 'Pasado a Nodum' : 'Pendiente de pasar'));
   lines.push('Ubicaciones: ' + ubicaciones.join(', '));
   lines.push('Total items distintos: ' + pasada.items.length);
   lines.push('Total unidades: ' + totalUnidades(pasada.items));
   lines.push('----------------------------------------');
-  lines.push('CODIGO\tMERCADERIA\tUBICACION\tCANTIDAD');
+  lines.push('SKU\tCODIGO DE BARRA\tMERCADERIA\tUBICACION\tCANTIDAD');
   pasada.items.forEach(it=>{
-    lines.push(`${it.codigo || '-'}\t${it.nombre}\t${it.ubicacion}\t${it.cantidad}`);
+    lines.push(`${it.sku || '-'}\t${it.codigoBarra || '-'}\t${it.nombre}\t${it.ubicacion}\t${it.cantidad}`);
   });
   lines.push('----------------------------------------');
   lines.push('Generado desde Pase de Stock');
@@ -379,7 +494,7 @@ function descargarTxt(pasada){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `pase_stock_${pasada.fechaArchivo}.txt`;
+  a.download = `pase_stock_${pasada.fechaCargaArchivo}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -391,8 +506,8 @@ function descargarTxt(pasada){
 function openFinalModal(pasada){
   $('modal-content').innerHTML = `
     <h3>✓ Pasada finalizada</h3>
-    <div class="modal-sub">${pasada.fechaHora} · ${pasada.items.length} ítems · ${totalUnidades(pasada.items)} unidades</div>
-    ${tablaHtml(pasada.items)}
+    <div class="modal-sub">${pasada.fechaCarga} · ${pasada.items.length} ítems · ${totalUnidades(pasada.items)} unidades · <span class="badge badge-pendiente">Pendiente</span></div>
+    ${tablaHtml(pasada.items, true)}
     <div class="modal-actions">
       <button class="secondary" onclick="closeModal()">Ver en la app</button>
       <button class="primary" onclick="descargarTxt(history[0]); closeModal();">Descargar TXT</button>
@@ -404,10 +519,13 @@ function openFinalModal(pasada){
 function verPasada(id){
   const pasada = history.find(p=>p.id===id);
   if(!pasada) return;
+  const badge = pasada.estado === 'pasado'
+    ? '<span class="badge badge-pasado">Pasado a Nodum</span>'
+    : '<span class="badge badge-pendiente">Pendiente</span>';
   $('modal-content').innerHTML = `
-    <h3>${pasada.fechaHora}</h3>
-    <div class="modal-sub">${pasada.items.length} ítems · ${totalUnidades(pasada.items)} unidades</div>
-    ${tablaHtml(pasada.items)}
+    <h3>${pasada.fechaCarga}</h3>
+    <div class="modal-sub">${pasada.items.length} ítems · ${totalUnidades(pasada.items)} unidades · ${badge}</div>
+    ${tablaHtml(pasada.items, pasada.estado !== 'pasado')}
     <div class="modal-actions">
       <button class="secondary" onclick="closeModal()">Cerrar</button>
       <button class="primary" onclick="descargarTxt(history.find(p=>p.id==='${id}'))">Descargar TXT</button>
@@ -416,10 +534,17 @@ function verPasada(id){
   $('modal-bg').classList.add('show');
 }
 
-function tablaHtml(items){
+function tablaHtml(items, mostrarFoto){
   return `<table>
-    <tr><th>Cód.</th><th>Mercadería</th><th>Ubicación</th><th>Cant.</th></tr>
-    ${items.map(it=>`<tr><td>${escapeHtml(it.codigo||'-')}</td><td>${escapeHtml(it.nombre)}</td><td>${escapeHtml(it.ubicacion)}</td><td>${it.cantidad}</td></tr>`).join('')}
+    <tr><th>SKU</th><th>Cód. barra</th><th>Mercadería</th><th>Ubic.</th><th>Cant.</th>${mostrarFoto ? '<th>Foto</th>' : ''}</tr>
+    ${items.map(it=>`<tr>
+      <td>${escapeHtml(it.sku||'-')}</td>
+      <td>${escapeHtml(it.codigoBarra||'-')}</td>
+      <td>${escapeHtml(it.nombre)}</td>
+      <td>${escapeHtml(it.ubicacion)}</td>
+      <td>${it.cantidad}</td>
+      ${mostrarFoto ? `<td>${it.foto ? `<img src="${it.foto}" onclick="verFoto('${it.foto}')">` : '-'}</td>` : ''}
+    </tr>`).join('')}
   </table>`;
 }
 
@@ -433,6 +558,18 @@ function eliminarPasada(id){
   renderHistory();
 }
 
+function marcarComoPasado(id){
+  const pasada = history.find(p=>p.id===id);
+  if(!pasada) return;
+  if(!confirm('¿Marcar como pasado a Nodum? Esto borra las fotos de referencia de esta pasada.')) return;
+  pasada.estado = 'pasado';
+  pasada.fechaPasado = fmtFecha(new Date());
+  pasada.items.forEach(it=>{ it.foto = null; });
+  saveHistory();
+  renderHistory();
+  showToast('Marcado como pasado a Nodum');
+}
+
 function renderHistory(){
   $('pill-hist-count').textContent = history.length;
   const wrap = $('hist-list-wrap');
@@ -440,21 +577,30 @@ function renderHistory(){
     wrap.innerHTML = `<div class="empty-state"><b>Sin pasadas guardadas</b>Cuando finalices una carga, va a aparecer acá.</div>`;
     return;
   }
-  wrap.innerHTML = history.map(p => `
+  wrap.innerHTML = history.map(p => {
+    const badge = p.estado === 'pasado'
+      ? '<span class="badge badge-pasado">Pasado a Nodum</span>'
+      : '<span class="badge badge-pendiente">Pendiente</span>';
+    const subLine = p.estado === 'pasado'
+      ? `Cargado ${p.fechaCarga} · Pasado ${p.fechaPasado}`
+      : `Cargado ${p.fechaCarga}`;
+    return `
     <div class="hist-card">
       <div class="hist-top">
         <div>
-          <div class="hist-date">${p.fechaHora}</div>
-          <div class="hist-sub">${p.items.length} ítems · ${totalUnidades(p.items)} unidades</div>
+          <div class="hist-date">${p.items.length} ítems · ${totalUnidades(p.items)} u.</div>
+          <div class="hist-sub">${subLine}</div>
         </div>
+        ${badge}
       </div>
       <div class="hist-actions">
         <button onclick="verPasada('${p.id}')">Ver</button>
         <button onclick="descargarTxt(history.find(h=>h.id==='${p.id}'))">Descargar</button>
+        ${p.estado !== 'pasado' ? `<button class="ok" onclick="marcarComoPasado('${p.id}')">Marcar pasado</button>` : ''}
         <button class="danger" onclick="eliminarPasada('${p.id}')">Eliminar</button>
       </div>
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 /* ---------- TABS ---------- */
@@ -468,7 +614,8 @@ function switchTab(tab){
 }
 
 /* Enter key moves focus / adds */
-$('f-codigo').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-nombre').focus(); }});
+$('f-sku').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-codigobarra').focus(); }});
+$('f-codigobarra').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-nombre').focus(); }});
 $('f-nombre').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-cant').focus(); }});
 $('f-cant').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addItem(); }});
 
