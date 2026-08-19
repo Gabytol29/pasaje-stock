@@ -131,9 +131,17 @@
     border:1px solid var(--line); border-radius:9px; padding:11px 10px; font-size:16px;
     font-family:var(--sans); background:var(--paper); min-width:0;
   }
-  #f-sku, #f-codigobarra{width:50%; font-family:var(--mono); font-size:14px;}
+  #f-sku{width:38%; font-family:var(--mono); font-size:14px;}
   #f-nombre{flex:1;}
   #f-cant{width:22%; font-family:var(--mono); text-align:center;}
+
+  .cb-wrap{flex:1; display:flex; gap:6px; min-width:0;}
+  #f-codigobarra{flex:1; font-family:var(--mono); font-size:14px; min-width:0;}
+  .btn-scan{
+    flex-shrink:0; background:var(--navy); color:#fff; border:none; border-radius:9px;
+    width:42px; font-size:17px; cursor:pointer;
+  }
+  .btn-scan:disabled{background:var(--paper-2); color:#B4B0A4;}
 
   .photo-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
   .btn-photo{
@@ -244,7 +252,11 @@
   <div class="add-bar" id="add-bar">
     <div class="add-row">
       <input type="text" id="f-sku" placeholder="SKU" autocomplete="off">
-      <input type="text" id="f-codigobarra" placeholder="Código de barra" autocomplete="off">
+      <div class="cb-wrap">
+        <input type="text" id="f-codigobarra" placeholder="Código de barra" autocomplete="off">
+        <input type="file" id="f-foto-cb" accept="image/*" capture="environment" class="hidden">
+        <button type="button" class="btn-scan" id="btn-scan" onclick="document.getElementById('f-foto-cb').click()" title="Escanear código de barra">📷</button>
+      </div>
     </div>
     <div class="add-row">
       <input type="text" id="f-nombre" placeholder="Nombre de la mercadería" autocomplete="off">
@@ -364,6 +376,43 @@ function verFoto(src){
   $('photo-viewer').classList.add('show');
 }
 function closePhotoViewer(){ $('photo-viewer').classList.remove('show'); }
+
+/* ---------- ESCANEAR CODIGO DE BARRA (foto -> texto) ---------- */
+const barcodeSupported = 'BarcodeDetector' in window;
+let barcodeDetector = null;
+if(barcodeSupported){
+  try{
+    barcodeDetector = new BarcodeDetector({
+      formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','code_93','codabar','itf','qr_code']
+    });
+  }catch(e){ barcodeDetector = null; }
+}
+
+$('f-foto-cb').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+
+  if(!barcodeDetector){
+    showToast('Este navegador no puede leer códigos desde una foto. Cargalo a mano (anda bien en Chrome/Android).');
+    return;
+  }
+
+  showToast('Leyendo código...');
+  try{
+    const bitmap = await createImageBitmap(file);
+    const resultados = await barcodeDetector.detect(bitmap);
+    if(resultados && resultados.length > 0){
+      $('f-codigobarra').value = resultados[0].rawValue;
+      showToast('Código detectado ✓');
+      $('f-nombre').focus();
+    } else {
+      showToast('No se pudo leer ningún código en la foto. Probá de nuevo, más cerca y con buena luz.');
+    }
+  }catch(err){
+    showToast('No se pudo leer la foto. Cargalo a mano.');
+  }
+});
 
 /* ---------- ADD ITEM ---------- */
 function addItem(){
