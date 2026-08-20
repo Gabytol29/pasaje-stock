@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Pase de Stock</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --navy:#182B3A;
@@ -18,12 +19,37 @@
     --green:#2E7D46;
     --green-bg:#E4EFE6;
     --red:#B5432E;
+    --warn-bg:#FFF7E6;
     --mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
   html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
   body{padding-bottom:150px;}
+
+  /* WELCOME */
+  .welcome-screen{
+    position:fixed; inset:0; background:var(--navy); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .welcome-card{
+    background:var(--paper); border-radius:16px; padding:28px 24px; width:100%; max-width:380px;
+    text-align:center;
+  }
+  .welcome-brand{font-family:var(--mono); font-weight:700; letter-spacing:0.5px; font-size:13px; text-transform:uppercase; color:var(--amber-dark); margin-bottom:2px;}
+  .welcome-sub{color:var(--ink-soft); font-size:12px; margin-bottom:20px;}
+  .welcome-meta{
+    background:var(--paper-2); border-radius:10px; padding:14px; font-size:13.5px; color:var(--ink);
+    margin-bottom:18px; line-height:1.5;
+  }
+  .welcome-meta b{display:block; font-size:15px; margin-bottom:2px;}
+  .welcome-btn{
+    display:block; width:100%; padding:13px; border-radius:9px; border:none; font-size:14.5px;
+    font-weight:700; cursor:pointer; margin-bottom:9px; font-family:var(--sans);
+  }
+  .welcome-btn.primary{background:var(--amber); color:var(--navy);}
+  .welcome-btn.secondary{background:var(--paper-2); color:var(--ink); border:1px solid var(--line);}
+  .hidden{display:none !important;}
 
   /* HEADER */
   .topbar{
@@ -33,7 +59,7 @@
     position:sticky; top:0; z-index:20;
     box-shadow:0 2px 10px rgba(0,0,0,0.15);
   }
-  .topbar-row{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
+  .topbar-row{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
   .brand{
     font-family:var(--mono);
     font-weight:700;
@@ -43,10 +69,11 @@
     color:var(--amber);
   }
   .brand small{display:block; font-family:var(--sans); color:#B9C4CE; font-weight:400; font-size:11px; text-transform:none; letter-spacing:0; margin-top:1px;}
-  .tab-switch{display:flex; gap:6px;}
+  .tab-switch{display:flex; gap:5px; flex-shrink:0;}
   .tab-btn{
     background:transparent; border:1px solid rgba(255,255,255,0.25); color:#C9D3DB;
-    font-family:var(--sans); font-size:12px; padding:6px 10px; border-radius:20px; cursor:pointer;
+    font-family:var(--sans); font-size:11.5px; padding:6px 8px; border-radius:20px; cursor:pointer;
+    white-space:nowrap;
   }
   .tab-btn.active{background:var(--amber); color:var(--navy); border-color:var(--amber); font-weight:700;}
 
@@ -68,6 +95,7 @@
     background:var(--navy); color:var(--paper); font-family:var(--mono); font-size:11px;
     padding:2px 8px; border-radius:10px;
   }
+  .count-pill.warn{background:var(--amber); color:var(--navy);}
 
   .empty-state{
     border:1px dashed var(--line); border-radius:12px; padding:26px 16px; text-align:center;
@@ -81,6 +109,7 @@
     background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px;
     display:flex; align-items:center; gap:10px;
   }
+  .item-card.warn{background:var(--warn-bg); border-color:var(--amber);}
   .item-qty{
     font-family:var(--mono); font-weight:700; font-size:17px; background:var(--paper-2);
     color:var(--navy); border-radius:8px; min-width:44px; text-align:center; padding:8px 4px; flex-shrink:0;
@@ -92,12 +121,13 @@
   .item-info{flex:1; min-width:0;}
   .item-name{font-size:14.5px; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .item-meta{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .warn-tag{font-family:var(--mono); font-size:10px; color:var(--amber-dark); font-weight:700; margin-left:2px;}
   .item-del{
     background:none; border:none; color:var(--red); font-size:19px; padding:6px 8px; cursor:pointer; line-height:1;
     flex-shrink:0;
   }
 
-  /* HISTORY */
+  /* HISTORY / ERRORS CARDS */
   .hist-card{
     background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:9px;
   }
@@ -110,6 +140,8 @@
   }
   .badge-pendiente{background:#FBEBD2; color:var(--amber-dark);}
   .badge-pasado{background:var(--green-bg); color:var(--green);}
+  .badge-dup{background:#FBEBD2; color:var(--amber-dark);}
+  .badge-noenc{background:#F3DAD3; color:var(--red);}
   .hist-actions{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
   .hist-actions button{
     flex:1; padding:8px 6px; font-size:12.5px; border-radius:7px; border:1px solid var(--line);
@@ -118,6 +150,13 @@
   }
   .hist-actions button.danger{color:var(--red); border-color:#E3C2B8;}
   .hist-actions button.ok{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  .err-toolbar{display:flex; gap:8px; margin:14px 4px 0;}
+  .err-toolbar button{
+    flex:1; background:var(--navy); color:#fff; border:none; border-radius:9px; padding:11px;
+    font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .err-toolbar button.secondary{background:var(--paper-2); color:var(--ink); border:1px solid var(--line);}
 
   /* BOTTOM ADD BAR */
   .add-bar{
@@ -132,8 +171,20 @@
     font-family:var(--sans); background:var(--paper); min-width:0;
   }
   #f-sku{width:38%; font-family:var(--mono); font-size:14px;}
-  #f-nombre{flex:1;}
   #f-cant{width:22%; font-family:var(--mono); text-align:center;}
+
+  .nombre-wrap{flex:1; position:relative; min-width:0;}
+  #f-nombre{width:100%;}
+  .suggestions{
+    position:absolute; left:0; right:0; bottom:100%; margin-bottom:6px;
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    max-height:240px; overflow-y:auto; box-shadow:0 -4px 16px rgba(0,0,0,0.12); z-index:40;
+  }
+  .suggestion-item{padding:9px 12px; border-bottom:1px solid #EEEAE0; cursor:pointer;}
+  .suggestion-item:last-child{border-bottom:none;}
+  .suggestion-item:active{background:var(--paper-2);}
+  .suggestion-nombre{font-size:13px; color:var(--ink); font-weight:600; line-height:1.3;}
+  .suggestion-sku{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); margin-top:1px;}
 
   .cb-wrap{flex:1; display:flex; gap:6px; min-width:0;}
   #f-codigobarra{flex:1; font-family:var(--mono); font-size:14px; min-width:0;}
@@ -142,6 +193,8 @@
     width:42px; font-size:17px; cursor:pointer;
   }
   .btn-scan:disabled{background:var(--paper-2); color:#B4B0A4;}
+
+
 
   .photo-row{display:flex; align-items:center; gap:8px; margin-bottom:7px;}
   .btn-photo{
@@ -210,70 +263,94 @@
     max-width:85%; text-align:center;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
-
-  .hidden{display:none !important;}
 </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="topbar-row">
-      <div class="brand">Pase de Stock<small>Districomp &middot; depósito a depósito</small></div>
-      <div class="tab-switch">
-        <button class="tab-btn active" id="tab-actual" onclick="switchTab('actual')">Actual</button>
-        <button class="tab-btn" id="tab-historial" onclick="switchTab('historial')">Historial</button>
-      </div>
-    </div>
-    <div class="ubic-bar" id="ubic-bar">
-      <label for="f-ubicacion">Ubicación / estantería actual</label>
-      <input type="text" id="f-ubicacion" placeholder="Ej: Depósito B - Estante 4" autocomplete="off">
+  <div class="welcome-screen" id="welcome-screen">
+    <div class="welcome-card">
+      <div class="welcome-brand">Pase de Stock</div>
+      <div class="welcome-sub">Districomp &middot; depósito a depósito</div>
+      <div id="welcome-body"></div>
+      <input type="file" id="f-catalogo" accept=".xlsx,.xls" class="hidden">
     </div>
   </div>
 
-  <main>
-    <div id="view-actual">
-      <div class="section-title">Ítems cargados <span class="count-pill" id="pill-count">0</span></div>
-      <div id="item-list-wrap">
-        <div class="empty-state">
-          <b>Todavía no cargaste nada</b>
-          Escribí la ubicación arriba y empezá a agregar ítems abajo.
+  <div id="app-shell" class="hidden">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="brand">Pase de Stock<small>Districomp &middot; depósito a depósito</small></div>
+        <div class="tab-switch">
+          <button class="tab-btn active" id="tab-actual" onclick="switchTab('actual')">Actual</button>
+          <button class="tab-btn" id="tab-historial" onclick="switchTab('historial')">Historial</button>
+          <button class="tab-btn" id="tab-errores" onclick="switchTab('errores')">Errores</button>
         </div>
       </div>
+      <div class="ubic-bar" id="ubic-bar">
+        <label for="f-ubicacion">Ubicación / estantería actual</label>
+        <input type="text" id="f-ubicacion" placeholder="Ej: Depósito B - Estante 4" autocomplete="off">
+      </div>
     </div>
 
-    <div id="view-historial" class="hidden">
-      <div class="section-title">Pasadas finalizadas <span class="count-pill" id="pill-hist-count">0</span></div>
-      <div id="hist-list-wrap">
-        <div class="empty-state"><b>Sin pasadas guardadas</b>Cuando finalices una carga, va a aparecer acá.</div>
+    <main>
+      <div id="view-actual">
+        <div class="section-title">Ítems cargados <span class="count-pill" id="pill-count">0</span></div>
+        <div id="item-list-wrap">
+          <div class="empty-state">
+            <b>Todavía no cargaste nada</b>
+            Escribí la ubicación arriba y empezá a agregar ítems abajo.
+          </div>
+        </div>
       </div>
-    </div>
-  </main>
 
-  <div class="add-bar" id="add-bar">
-    <div class="add-row">
-      <input type="text" id="f-sku" placeholder="SKU" autocomplete="off">
-      <div class="cb-wrap">
-        <input type="text" id="f-codigobarra" placeholder="Código de barra" autocomplete="off">
-        <input type="file" id="f-foto-cb" accept="image/*" capture="environment" class="hidden">
-        <button type="button" class="btn-scan" id="btn-scan" onclick="document.getElementById('f-foto-cb').click()" title="Escanear código de barra">📷</button>
+      <div id="view-historial" class="hidden">
+        <div class="section-title">Pasadas finalizadas <span class="count-pill" id="pill-hist-count">0</span></div>
+        <div id="hist-list-wrap">
+          <div class="empty-state"><b>Sin pasadas guardadas</b>Cuando finalices una carga, va a aparecer acá.</div>
+        </div>
       </div>
-    </div>
-    <div class="add-row">
-      <input type="text" id="f-nombre" placeholder="Nombre de la mercadería" autocomplete="off">
-      <input type="number" id="f-cant" placeholder="Cant." inputmode="numeric" min="1">
-    </div>
-    <div class="photo-row">
-      <input type="file" id="f-foto" accept="image/*" capture="environment" class="hidden">
-      <button type="button" class="btn-photo" id="btn-foto" onclick="document.getElementById('f-foto').click()">📷 Foto (opcional)</button>
-      <span class="photo-hint" id="photo-hint">solo de referencia, se borra al pasar el ítem</span>
-      <div class="photo-preview hidden" id="photo-preview">
-        <img id="photo-preview-img" src="">
-        <button type="button" onclick="quitarFotoPendiente()">✕</button>
+
+      <div id="view-errores" class="hidden">
+        <div class="err-toolbar">
+          <button onclick="descargarErroresExcel()">Descargar Excel de errores</button>
+          <button class="secondary" onclick="mostrarBienvenida()">Cambiar catálogo</button>
+        </div>
+        <div class="section-title">Duplicados en catálogo <span class="count-pill warn" id="pill-dup-count">0</span></div>
+        <div id="err-dup-wrap"><div class="empty-state">Sin duplicados detectados.</div></div>
+        <div class="section-title">No encontrados en el catálogo <span class="count-pill warn" id="pill-noenc-count">0</span></div>
+        <div id="err-noenc-wrap"><div class="empty-state">Sin artículos sin encontrar.</div></div>
       </div>
-    </div>
-    <div class="add-btn-row">
-      <button class="btn-add" onclick="addItem()">+ Agregar ítem</button>
-      <button class="btn-fin" id="btn-finalizar" onclick="finalizarPasada()" disabled>Finalizar</button>
+    </main>
+
+    <div class="add-bar" id="add-bar">
+      <div class="add-row">
+        <input type="text" id="f-sku" placeholder="SKU" autocomplete="off">
+        <div class="cb-wrap">
+          <input type="text" id="f-codigobarra" placeholder="Código de barra" autocomplete="off">
+          <input type="file" id="f-foto-cb" accept="image/*" capture="environment" class="hidden">
+          <button type="button" class="btn-scan" id="btn-scan" onclick="document.getElementById('f-foto-cb').click()" title="Escanear código de barra">📷</button>
+        </div>
+      </div>
+      <div class="add-row">
+        <div class="nombre-wrap">
+          <input type="text" id="f-nombre" placeholder="Nombre de la mercadería" autocomplete="off">
+          <div class="suggestions hidden" id="suggestions"></div>
+        </div>
+        <input type="number" id="f-cant" placeholder="Cant." inputmode="numeric" min="1">
+      </div>
+      <div class="photo-row">
+        <input type="file" id="f-foto" accept="image/*" capture="environment" class="hidden">
+        <button type="button" class="btn-photo" id="btn-foto" onclick="document.getElementById('f-foto').click()">📷 Foto (opcional)</button>
+        <span class="photo-hint" id="photo-hint">solo de referencia, se borra al pasar el ítem</span>
+        <div class="photo-preview hidden" id="photo-preview">
+          <img id="photo-preview-img" src="">
+          <button type="button" onclick="quitarFotoPendiente()">✕</button>
+        </div>
+      </div>
+      <div class="add-btn-row">
+        <button class="btn-add" onclick="addItem()">+ Agregar ítem</button>
+        <button class="btn-fin" id="btn-finalizar" onclick="finalizarPasada()" disabled>Finalizar</button>
+      </div>
     </div>
   </div>
 
@@ -290,10 +367,15 @@
 <script>
 const LS_CURRENT = 'pasestock_current';
 const LS_HISTORY = 'pasestock_history';
+const LS_CATALOG = 'pasestock_catalog';
+const LS_ERRORS = 'pasestock_errors';
 
 let current = JSON.parse(localStorage.getItem(LS_CURRENT) || '{"ubicacionDefault":"","items":[]}');
 let history = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+let catalog = JSON.parse(localStorage.getItem(LS_CATALOG) || 'null');
+let errors = JSON.parse(localStorage.getItem(LS_ERRORS) || '[]');
 let fotoPendiente = null;
+let currentSuggestions = [];
 
 const $ = id => document.getElementById(id);
 
@@ -305,21 +387,22 @@ function saveHistory(){
   try{ localStorage.setItem(LS_HISTORY, JSON.stringify(history)); }
   catch(e){ showToast('No hay espacio de almacenamiento. Marcá pasadas viejas como "pasado" para liberar lugar.'); }
 }
+function saveCatalog(){
+  try{ localStorage.setItem(LS_CATALOG, JSON.stringify(catalog)); }
+  catch(e){ showToast('No se pudo guardar el catálogo (muy pesado para el almacenamiento del navegador).'); }
+}
+function saveErrors(){
+  try{ localStorage.setItem(LS_ERRORS, JSON.stringify(errors)); }
+  catch(e){ /* silencioso: los errores no son críticos para operar */ }
+}
 
 function showToast(msg){
   const t = $('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(showToast._tm);
-  showToast._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 2400);
 }
-
-/* ---------- INIT ---------- */
-$('f-ubicacion').value = current.ubicacionDefault || '';
-$('f-ubicacion').addEventListener('input', e=>{
-  current.ubicacionDefault = e.target.value;
-  saveCurrent();
-});
 
 function fmtFecha(d){
   const p = n => String(n).padStart(2,'0');
@@ -329,6 +412,240 @@ function fmtFechaArchivo(d){
   const p = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- WELCOME / CATALOGO ---------- */
+function mostrarBienvenida(){
+  closeModal();
+  $('app-shell').classList.add('hidden');
+  $('welcome-screen').classList.remove('hidden');
+  renderWelcome();
+}
+
+function entrarApp(){
+  $('welcome-screen').classList.add('hidden');
+  $('app-shell').classList.remove('hidden');
+  actualizarPlaceholderBusqueda();
+  switchTab('actual');
+}
+
+function renderWelcome(){
+  const wrap = $('welcome-body');
+  if(catalog){
+    wrap.innerHTML = `
+      <div class="welcome-meta"><b>Catálogo actual</b>Cargado el ${catalog.fechaCarga}<br>${catalog.totalArticulos} artículos</div>
+      <button class="welcome-btn primary" onclick="entrarApp()">Usar este catálogo</button>
+      <button class="welcome-btn secondary" onclick="document.getElementById('f-catalogo').click()">Cargar catálogo nuevo</button>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <div class="welcome-meta">Todavía no cargaste ningún catálogo de artículos. Podés cargar uno o seguir sin catálogo y cargar todo a mano.</div>
+      <button class="welcome-btn primary" onclick="document.getElementById('f-catalogo').click()">Cargar catálogo (Excel)</button>
+      <button class="welcome-btn secondary" onclick="entrarApp()">Seguir sin catálogo</button>
+    `;
+  }
+}
+
+function actualizarPlaceholderBusqueda(){
+  $('f-nombre').placeholder = catalog ? 'Nombre o código (buscá en el catálogo)' : 'Nombre de la mercadería';
+}
+
+$('f-catalogo').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(file) cargarCatalogoNuevo(file);
+});
+
+function normalizeHeader(h){
+  return String(h).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+
+function encontrarFilaEncabezado(raw){
+  const candidatos = ['cod_articulo','nom_articulo','sku','codigo','nombre','descripcion','articulo','barra','barcode','ean'];
+  let mejorIdx = 0, mejorScore = -1;
+  for(let i=0; i<Math.min(raw.length, 25); i++){
+    const row = raw[i];
+    if(!row) continue;
+    let score = 0;
+    row.forEach(cell=>{
+      if(cell===undefined || cell===null || cell==='') return;
+      const nk = normalizeHeader(String(cell));
+      if(candidatos.some(c=>nk.includes(c))) score++;
+    });
+    if(score > mejorScore){ mejorScore = score; mejorIdx = i; }
+  }
+  return mejorIdx;
+}
+
+function detectColumns(rows){
+  if(!rows.length) return {skuKey:null, nombreKey:null, cbKey:null};
+  const keys = Object.keys(rows[0]);
+  let skuKey=null, nombreKey=null, cbKey=null;
+
+  // 1) nombres específicos típicos de Nodum
+  keys.forEach(k=>{
+    const nk = normalizeHeader(k);
+    if(!skuKey && nk.includes('cod_articulo')) skuKey = k;
+    if(!nombreKey && nk.includes('nom_articulo')) nombreKey = k;
+  });
+  // 2) genéricos
+  keys.forEach(k=>{
+    const nk = normalizeHeader(k);
+    if(!skuKey && nk.includes('sku')) skuKey = k;
+    if(!nombreKey && (nk.includes('nombre') || nk.includes('descrip'))) nombreKey = k;
+    if(!cbKey && (nk.includes('barra') || nk.includes('barcode') || nk.includes('ean'))) cbKey = k;
+  });
+  // 3) laxos, última opción
+  keys.forEach(k=>{
+    const nk = normalizeHeader(k);
+    if(!skuKey && nk.includes('articulo') && nk.includes('cod')) skuKey = k;
+    if(!nombreKey && nk.includes('articulo') && (nk.includes('nom') || nk.includes('desc'))) nombreKey = k;
+  });
+  return {skuKey, nombreKey, cbKey};
+}
+
+async function cargarCatalogoNuevo(file){
+  showToast('Leyendo catálogo...');
+  try{
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+    if(!raw.length){ showToast('El Excel está vacío.'); return; }
+
+    const headerIdx = encontrarFilaEncabezado(raw);
+    const headers = raw[headerIdx].map(h => String(h || '').trim());
+    const dataRows = raw.slice(headerIdx + 1).filter(r => r.some(c => String(c).trim() !== ''));
+    const rows = dataRows.map(r=>{
+      const obj = {};
+      headers.forEach((h,i)=>{ if(h) obj[h] = r[i]; });
+      return obj;
+    });
+    if(!rows.length){ showToast('No encontré filas de datos en el Excel.'); return; }
+
+    const cols = detectColumns(rows);
+    if(!cols.skuKey){ showToast('No encontré una columna de código de artículo / SKU en el Excel.'); return; }
+
+    // Agrupar por SKU (cod_articulo) para el catálogo principal
+    const bySku = {};
+    rows.forEach(r=>{
+      const sku = String(r[cols.skuKey] ?? '').trim();
+      if(!sku) return;
+      const nombre = cols.nombreKey ? String(r[cols.nombreKey] ?? '').trim() : '';
+      if(!bySku[sku]) bySku[sku] = new Set();
+      bySku[sku].add(nombre);
+    });
+
+    const now = new Date();
+    const items = [];
+    const nuevosErrores = [];
+
+    Object.keys(bySku).forEach(sku=>{
+      const nombres = [...bySku[sku]];
+      if(nombres.length > 1){
+        nuevosErrores.push({
+          fecha: fmtFecha(now), fechaTs: now.getTime(), tipo: 'duplicado',
+          codigoBarra: sku,
+          detalle: 'SKU ' + sku + ' con nombres distintos en el catálogo: ' + nombres.join(' / ')
+        });
+      } else {
+        items.push({sku, nombre: nombres[0] || ''});
+      }
+    });
+
+    // Código de barra: opcional, solo si el archivo lo trae
+    let hasBarcodes = false;
+    let barcodeMap = {};
+    if(cols.cbKey){
+      hasBarcodes = true;
+      const bySkuForCb = {};
+      rows.forEach(r=>{
+        const cb = String(r[cols.cbKey] ?? '').trim();
+        if(!cb) return;
+        const sku = String(r[cols.skuKey] ?? '').trim();
+        if(!bySkuForCb[cb]) bySkuForCb[cb] = new Set();
+        if(sku) bySkuForCb[cb].add(sku);
+      });
+      Object.keys(bySkuForCb).forEach(cb=>{
+        const skus = [...bySkuForCb[cb]];
+        if(skus.length === 1){
+          barcodeMap[cb] = skus[0];
+        } else if(skus.length > 1){
+          nuevosErrores.push({
+            fecha: fmtFecha(now), fechaTs: now.getTime(), tipo: 'duplicado',
+            codigoBarra: cb,
+            detalle: 'Código de barra con SKUs en conflicto: ' + skus.join(', ')
+          });
+        }
+      });
+    }
+
+    errors = errors.concat(nuevosErrores);
+    saveErrors();
+
+    catalog = {
+      fechaCarga: fmtFecha(now),
+      totalArticulos: items.length,
+      hasBarcodes,
+      items,
+      barcodeMap
+    };
+    saveCatalog();
+
+    renderWelcome();
+    renderErrores();
+    showToast(`Catálogo cargado: ${catalog.totalArticulos} artículos${nuevosErrores.length ? ', ' + nuevosErrores.length + ' con conflictos' : ''}`);
+    entrarApp();
+  }catch(err){
+    console.error(err);
+    showToast('No se pudo leer el archivo. Verificá que sea un Excel válido (.xlsx).');
+  }
+}
+
+/* ---------- BUSCADOR DE ARTICULO (SKU + nombre) ---------- */
+$('f-nombre').addEventListener('input', ()=>{
+  if(!catalog){ ocultarSugerencias(); return; }
+  const q = $('f-nombre').value.trim().toLowerCase();
+  if(q.length < 2){ ocultarSugerencias(); return; }
+  const results = catalog.items.filter(it=>
+    it.sku.toLowerCase().includes(q) || it.nombre.toLowerCase().includes(q)
+  ).slice(0, 8);
+  mostrarSugerencias(results);
+});
+
+function mostrarSugerencias(results){
+  currentSuggestions = results;
+  const box = $('suggestions');
+  if(results.length === 0){
+    box.innerHTML = `<div class="suggestion-item" style="color:var(--ink-soft);">Sin resultados en el catálogo</div>`;
+  } else {
+    box.innerHTML = results.map((r,i)=>`
+      <div class="suggestion-item" data-idx="${i}">
+        <div class="suggestion-nombre">${escapeHtml(r.nombre || '(sin nombre)')}</div>
+        <div class="suggestion-sku">SKU ${escapeHtml(r.sku)}</div>
+      </div>
+    `).join('');
+  }
+  box.classList.remove('hidden');
+}
+function ocultarSugerencias(){ $('suggestions').classList.add('hidden'); }
+
+$('suggestions').addEventListener('click', e=>{
+  const item = e.target.closest('.suggestion-item');
+  if(!item || item.dataset.idx === undefined) return;
+  const r = currentSuggestions[parseInt(item.dataset.idx, 10)];
+  if(!r) return;
+  $('f-nombre').value = r.nombre;
+  $('f-sku').value = r.sku;
+  ocultarSugerencias();
+  $('f-codigobarra').focus();
+});
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.nombre-wrap')) ocultarSugerencias();
+});
 
 /* ---------- FOTO (referencia, se resize antes de guardar) ---------- */
 $('f-foto').addEventListener('change', e=>{
@@ -404,8 +721,8 @@ $('f-foto-cb').addEventListener('change', async e=>{
     const resultados = await barcodeDetector.detect(bitmap);
     if(resultados && resultados.length > 0){
       $('f-codigobarra').value = resultados[0].rawValue;
+      tryAutofillFromBarcode();
       showToast('Código detectado ✓');
-      $('f-nombre').focus();
     } else {
       showToast('No se pudo leer ningún código en la foto. Probá de nuevo, más cerca y con buena luz.');
     }
@@ -413,6 +730,20 @@ $('f-foto-cb').addEventListener('change', async e=>{
     showToast('No se pudo leer la foto. Cargalo a mano.');
   }
 });
+
+function tryAutofillFromBarcode(){
+  if(!catalog || !catalog.hasBarcodes) return;
+  const cb = $('f-codigobarra').value.trim();
+  if(!cb) return;
+  const sku = catalog.barcodeMap[cb];
+  if(!sku) return;
+  const item = catalog.items.find(it=>it.sku===sku);
+  if(item){
+    $('f-sku').value = item.sku;
+    if(!$('f-nombre').value.trim()) $('f-nombre').value = item.nombre;
+  }
+}
+$('f-codigobarra').addEventListener('change', tryAutofillFromBarcode);
 
 /* ---------- ADD ITEM ---------- */
 function addItem(){
@@ -426,6 +757,21 @@ function addItem(){
   if(!nombre){ showToast('Falta el nombre de la mercadería'); $('f-nombre').focus(); return; }
   if(!cant || cant <= 0){ showToast('Cantidad inválida'); $('f-cant').focus(); return; }
 
+  let sinMatch = false;
+  if(catalog && !sku){
+    sinMatch = true;
+    const now = new Date();
+    errors.push({
+      fecha: fmtFecha(now),
+      fechaTs: now.getTime(),
+      tipo: 'no_encontrado',
+      codigoBarra: codigoBarra || '(sin código)',
+      detalle: nombre
+    });
+    saveErrors();
+    renderErrores();
+  }
+
   const key = it => `${it.ubicacion}|${it.sku||''}|${it.codigoBarra||''}|${it.nombre}`;
   const newKey = key({ubicacion:ubic, sku, codigoBarra, nombre});
   const existing = current.items.find(it => key(it) === newKey);
@@ -437,6 +783,7 @@ function addItem(){
     current.items.push({
       ubicacion: ubic, sku, codigoBarra, nombre, cantidad: cant,
       foto: fotoPendiente || null,
+      sinMatch,
       hora: fmtFecha(new Date())
     });
   }
@@ -449,8 +796,9 @@ function addItem(){
   $('f-nombre').value = '';
   $('f-cant').value = '';
   quitarFotoPendiente();
-  $('f-sku').focus();
-  showToast(existing ? 'Cantidad sumada' : 'Ítem agregado');
+  ocultarSugerencias();
+  $('f-nombre').focus();
+  showToast(existing ? 'Cantidad sumada' : (sinMatch ? 'Agregado sin SKU (revisar en Errores)' : 'Ítem agregado'));
 }
 
 function removeItem(idx){
@@ -472,21 +820,19 @@ function renderItems(){
   wrap.innerHTML = `<div class="item-list">` + current.items.map((it, i) => {
     const meta = [it.sku ? 'SKU '+it.sku : null, it.codigoBarra ? 'CB '+it.codigoBarra : null, it.ubicacion].filter(Boolean).join(' · ');
     const thumb = it.foto ? `<img class="item-thumb" src="${it.foto}" onclick="verFoto('${it.foto}')">` : '';
+    const warnClass = it.sinMatch ? ' warn' : '';
+    const warnTag = it.sinMatch ? '<span class="warn-tag">⚠ sin SKU</span>' : '';
     return `
-    <div class="item-card">
+    <div class="item-card${warnClass}">
       <div class="item-qty">${it.cantidad}</div>
       ${thumb}
       <div class="item-info">
-        <div class="item-name">${escapeHtml(it.nombre)}</div>
+        <div class="item-name">${escapeHtml(it.nombre)}${warnTag}</div>
         <div class="item-meta">${escapeHtml(meta)}</div>
       </div>
       <button class="item-del" onclick="removeItem(${i})" aria-label="Eliminar">✕</button>
     </div>
   `; }).join('') + `</div>`;
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 /* ---------- FINALIZAR ---------- */
@@ -549,6 +895,16 @@ function descargarTxt(pasada){
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('Archivo descargado');
+}
+
+function descargarErroresExcel(){
+  if(errors.length === 0){ showToast('No hay errores registrados.'); return; }
+  const dup = errors.filter(e=>e.tipo==='duplicado').map(e=>({Fecha:e.fecha, 'Código/SKU':e.codigoBarra, Detalle:e.detalle}));
+  const noEnc = errors.filter(e=>e.tipo==='no_encontrado').map(e=>({Fecha:e.fecha, 'Código de barra':e.codigoBarra, Nombre:e.detalle}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dup), 'Duplicados');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(noEnc), 'No encontrados');
+  XLSX.writeFile(wb, `errores_catalogo_${fmtFechaArchivo(new Date())}.xlsx`);
 }
 
 /* ---------- MODALS ---------- */
@@ -652,24 +1008,73 @@ function renderHistory(){
   `; }).join('');
 }
 
+/* ---------- ERRORES ---------- */
+function renderErrores(){
+  const dup = errors.filter(e=>e.tipo==='duplicado').sort((a,b)=>b.fechaTs - a.fechaTs);
+  const noEnc = errors.filter(e=>e.tipo==='no_encontrado').sort((a,b)=>b.fechaTs - a.fechaTs);
+
+  $('pill-dup-count').textContent = dup.length;
+  $('pill-noenc-count').textContent = noEnc.length;
+
+  $('err-dup-wrap').innerHTML = dup.length === 0
+    ? `<div class="empty-state">Sin duplicados detectados.</div>`
+    : dup.map(e => `
+      <div class="hist-card">
+        <div class="hist-top">
+          <div>
+            <div class="hist-date">${escapeHtml(e.codigoBarra)}</div>
+            <div class="hist-sub">${e.fecha}</div>
+          </div>
+          <span class="badge badge-dup">Duplicado</span>
+        </div>
+        <div class="hist-sub" style="margin-top:8px;">${escapeHtml(e.detalle)}</div>
+      </div>
+    `).join('');
+
+  $('err-noenc-wrap').innerHTML = noEnc.length === 0
+    ? `<div class="empty-state">Sin artículos sin encontrar.</div>`
+    : noEnc.map(e => `
+      <div class="hist-card">
+        <div class="hist-top">
+          <div>
+            <div class="hist-date">${escapeHtml(e.detalle || '(sin nombre)')}</div>
+            <div class="hist-sub">${e.fecha}${e.codigoBarra && e.codigoBarra !== '(sin código)' ? ' · CB ' + escapeHtml(e.codigoBarra) : ''}</div>
+          </div>
+          <span class="badge badge-noenc">No encontrado</span>
+        </div>
+      </div>
+    `).join('');
+}
+
 /* ---------- TABS ---------- */
 function switchTab(tab){
   $('tab-actual').classList.toggle('active', tab==='actual');
   $('tab-historial').classList.toggle('active', tab==='historial');
+  $('tab-errores').classList.toggle('active', tab==='errores');
   $('view-actual').classList.toggle('hidden', tab!=='actual');
   $('view-historial').classList.toggle('hidden', tab!=='historial');
+  $('view-errores').classList.toggle('hidden', tab!=='errores');
   $('add-bar').classList.toggle('hidden', tab!=='actual');
   $('ubic-bar').classList.toggle('hidden', tab!=='actual');
+  if(tab==='errores') renderErrores();
 }
 
-/* Enter key moves focus / adds */
+/* ---------- INIT ---------- */
+$('f-ubicacion').value = current.ubicacionDefault || '';
+$('f-ubicacion').addEventListener('input', e=>{
+  current.ubicacionDefault = e.target.value;
+  saveCurrent();
+});
+
 $('f-sku').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-codigobarra').focus(); }});
-$('f-codigobarra').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-nombre').focus(); }});
-$('f-nombre').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('f-cant').focus(); }});
+$('f-codigobarra').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); tryAutofillFromBarcode(); $('f-nombre').focus(); }});
+$('f-nombre').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); ocultarSugerencias(); $('f-cant').focus(); }});
 $('f-cant').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addItem(); }});
 
 renderItems();
 renderHistory();
+renderErrores();
+renderWelcome();
 </script>
 </body>
 </html>
